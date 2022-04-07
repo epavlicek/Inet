@@ -1,0 +1,64 @@
+import java.io.*;
+import java.net.*; 
+class Worker extends Thread { // This defines the class.
+	Socket sock; 
+	Worker (Socket s) {sock = s;} // Assigns s to Socket
+ public void run(){ //This is what runs when the class starts.
+	 PrintStream out = null; //output
+	 BufferedReader in = null; //input
+	 try {
+		 in = new BufferedReader
+				 (new InputStreamReader(sock.getInputStream())); // get connection and read input from it.
+		 out = new PrintStream(sock.getOutputStream());
+		 try {
+			 String name;
+			 name = in.readLine (); // name = data from socket (For example, the website I type such as "google.com")
+			 System.out.println("Looking up " + name); // 
+			 printRemoteAddress(name, out);
+		 } catch (IOException x) { // If there is a problem with the socket this will catch any exceptions.
+			 System.out.println("Server read error");
+			 x.printStackTrace ();
+		 }
+		 sock.close(); // Closes the socket.
+	 } catch (IOException ioe) {System.out.println(ioe);}
+ }
+
+ static void printRemoteAddress (String name, PrintStream out) {
+	 try {
+		 out.println("Looking up " + name + "...");
+		 InetAddress machine = InetAddress.getByName (name);
+		 // Print out host name and IP address to socket and is returned to the client.
+		 out.println("Host name : " + machine.getHostName ()); 
+		 out.println("Host IP : " + toText (machine.getAddress ()));
+	 } catch(UnknownHostException ex) { // Catches errors
+		 out.println ("Failed in atempt to look up " + name);
+	 }
+ }
+
+
+ static String toText (byte ip[]) { 
+	 StringBuffer result = new StringBuffer ();
+	 for (int i = 0; i < ip.length; ++ i) {
+		 if (i > 0) result.append (".");
+		 result.append (0xff & ip[i]);
+	 }
+	 return result.toString ();
+ }
+}
+public class InetServer {
+
+ public static void main(String a[]) throws IOException {
+	 int q_len = 6; 
+	 int port = 1565;
+	 Socket sock;
+
+	 ServerSocket servsock = new ServerSocket(port, q_len);
+
+	 System.out.println
+ ("Clark Elliott's Inet server 1.8 starting up, listening at port 1565.\n");
+	 while (true) { //Loops until it finds a socket connection
+		 sock = servsock.accept(); 
+		 new Worker(sock).start(); //Connection passed to here to take care of it and starts the worker thread.
+ }
+ }
+}
